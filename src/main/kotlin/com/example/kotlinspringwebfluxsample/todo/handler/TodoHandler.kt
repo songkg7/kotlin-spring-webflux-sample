@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.server.ServerResponse.notFound
 import org.springframework.web.reactive.function.server.ServerResponse.ok
 import org.springframework.web.reactive.function.server.body
 import reactor.core.publisher.Mono
+import java.util.*
 
 @Component
 class TodoHandler(private val repository: TodoRepository) {
@@ -20,5 +21,24 @@ class TodoHandler(private val repository: TodoRepository) {
             .switchIfEmpty(notFound().build())
     }
 
+    fun getById(request: ServerRequest): Mono<ServerResponse> {
+        return ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body<Todo>(Mono.justOrEmpty(repository.findById(request.pathVariable("id").toLong())))
+            .switchIfEmpty(notFound().build())
+    }
+
+    fun save(request: ServerRequest): Mono<ServerResponse> {
+        return ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request.bodyToMono(Todo::class.java)
+                .switchIfEmpty(Mono.empty())
+                .filter(Objects::nonNull)
+                .flatMap {
+                    Mono.fromCallable {
+                        repository.save(it)
+                    }.then(Mono.just(it))
+                })
+    }
 
 }

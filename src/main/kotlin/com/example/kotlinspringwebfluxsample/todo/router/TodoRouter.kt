@@ -16,7 +16,9 @@ class TodoRouter(private val handler: TodoHandler) {
             path("todos/"),
             router {
                 listOf(
-                    GET("/", handler::getAll)
+                    GET("/", handler::getAll),
+                    GET("/{id}", handler::getById),
+                    POST("/", handler::save)
                 )
             }
         )

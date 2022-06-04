@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.server.ServerResponse.notFound
 import org.springframework.web.reactive.function.server.ServerResponse.ok
 import org.springframework.web.reactive.function.server.body
 import reactor.core.publisher.Mono
+import java.time.LocalDateTime
 import java.util.*
 
 @Component
@@ -39,6 +40,22 @@ class TodoHandler(private val repository: TodoRepository) {
                         repository.save(it)
                     }.then(Mono.just(it))
                 })
+    }
+
+    fun done(request: ServerRequest): Mono<ServerResponse> {
+        return ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(Mono.justOrEmpty(repository.findById(request.pathVariable("id").toLong()))
+            .switchIfEmpty(Mono.empty())
+            .filter(Objects::nonNull)
+            .flatMap {
+                Mono.fromCallable {
+                    it.done = true
+                    it.modifiedAt = LocalDateTime.now()
+                    repository.save(it)
+                }.then(Mono.just(it))
+            }
+        ).switchIfEmpty(notFound().build())
     }
 
 }

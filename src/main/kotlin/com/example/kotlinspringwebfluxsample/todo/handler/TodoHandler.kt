@@ -46,16 +46,31 @@ class TodoHandler(private val repository: TodoRepository) {
         return ok()
             .contentType(MediaType.APPLICATION_JSON)
             .body(Mono.justOrEmpty(repository.findById(request.pathVariable("id").toLong()))
-            .switchIfEmpty(Mono.empty())
-            .filter(Objects::nonNull)
-            .flatMap {
-                Mono.fromCallable {
-                    it.done = true
-                    it.modifiedAt = LocalDateTime.now()
-                    repository.save(it)
-                }.then(Mono.just(it))
-            }
-        ).switchIfEmpty(notFound().build())
+                .switchIfEmpty(Mono.empty())
+                .filter(Objects::nonNull)
+                .flatMap {
+                    Mono.fromCallable {
+                        it.done = true
+                        it.modifiedAt = LocalDateTime.now()
+                        repository.save(it)
+                    }.then(Mono.just(it))
+                }
+            ).switchIfEmpty(notFound().build())
+    }
+
+    fun delete(request: ServerRequest): Mono<ServerResponse> {
+        return ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(Mono.justOrEmpty(repository.findById(request.pathVariable("id").toLong()))
+                .switchIfEmpty(Mono.empty())
+                .filter(Objects::nonNull)
+                .flatMap { todo ->
+                    Mono.fromCallable {
+                        repository.delete(todo)
+                    }.then(Mono.just(todo))
+                }
+            )
+            .switchIfEmpty(notFound().build())
     }
 
 }

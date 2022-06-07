@@ -24,7 +24,5 @@ class TodoRouter(private val handler: TodoHandler) {
                 )
             }
         )
-
     }
-
 }

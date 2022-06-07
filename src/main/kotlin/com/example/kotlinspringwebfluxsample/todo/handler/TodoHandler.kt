@@ -3,6 +3,7 @@ package com.example.kotlinspringwebfluxsample.todo.handler
 import com.example.kotlinspringwebfluxsample.todo.domain.Todo
 import com.example.kotlinspringwebfluxsample.todo.repository.TodoRepository
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.EntityResponse.fromObject
 import org.springframework.web.reactive.function.server.ServerRequest
@@ -14,8 +15,7 @@ import java.util.*
 @Component
 class TodoHandler(private val repository: TodoRepository) {
     fun getAll(request: ServerRequest) =
-        repository.findAll().filter(Objects::nonNull)
-            .flatMap { ok().bodyValue(fromObject(it)) }
+        ok().contentType(MediaType.APPLICATION_JSON).body(repository.findAll(), Todo::class.java)
 
     fun getById(request: ServerRequest) =
         repository.findById(request.pathVariable("id").toLong())
@@ -24,6 +24,7 @@ class TodoHandler(private val repository: TodoRepository) {
     fun save(request: ServerRequest) =
         repository.saveAll(request.bodyToMono(Todo::class.java))
             .flatMap { created(URI.create("/todo/${it.id}")).build() }
+            .next()
 
     fun done(request: ServerRequest) =
         repository.findById(request.pathVariable("id").toLong())
